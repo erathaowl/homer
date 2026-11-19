@@ -1,6 +1,6 @@
 <template>
   <Generic :item="item" :badges="badges">
-    <template #subtitle>
+    <template v-if="!serverError && dl !== null" #subtitle>
       <span class="is-family-monospace mr-3">
         <i class="fas fa-download"></i>
         {{ downRate }}
@@ -33,21 +33,27 @@ export default {
         {
           key: "torrents",
           label: "Torrents",
-          value: this.count,
+          value: this.serverError ? null : this.count,
           tone: "neutral",
           cap: false,
         },
         this.connectionBadge(),
       ];
     },
+    headers: function () {
+      return this.item.apikey
+        ? { Authorization: `Bearer ${this.item.apikey}` }
+        : {};
+    },
   },
   methods: {
     fetchData: function () {
+      const headers = this.headers;
       return this.load(
-        this.fetch("/api/v2/torrents/info").then((body) => {
+        this.fetch("/api/v2/torrents/info", { headers }).then((body) => {
           this.count = body.length;
         }),
-        this.fetch("/api/v2/transfer/info").then((body) => {
+        this.fetch("/api/v2/transfer/info", { headers }).then((body) => {
           this.dl = body.dl_info_speed;
           this.ul = body.up_info_speed;
         }),
