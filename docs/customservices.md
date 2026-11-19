@@ -777,9 +777,11 @@ for setting up qBittorrent.
   type: "qBittorrent"
   logo: "assets/tools/sample.png"
   url: https://my-service.url # Your qBittorrent web UI
-  apikey: "<---insert-api-key-here--->"
+  apikey: "<---insert-api-key-here--->" # Optional: qBittorrent 5.2 or later, see below.
   hide: [] # Optional: badges to hide: "torrents", "serverError".
 ```
+
+**API key**: without one, qBittorrent has to let Homer's requests through without a login, for example with "Bypass authentication for clients in whitelisted IP subnets". From qBittorrent 5.2, you can create a key in Options → Web UI → API Key instead.
 
 ## rTorrent
 

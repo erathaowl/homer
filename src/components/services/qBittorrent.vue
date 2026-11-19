@@ -1,6 +1,6 @@
 <template>
   <Generic :item="item" :badges="badges">
-    <template #subtitle>
+    <template v-if="!serverError && dl !== null" #subtitle>
       <span class="is-family-monospace mr-3">
         <i class="fas fa-download"></i>
         {{ downRate }}
@@ -33,7 +33,7 @@ export default {
         {
           key: "torrents",
           label: "Torrents",
-          value: this.count,
+          value: this.serverError ? null : this.count,
           tone: "neutral",
           cap: false,
         },
