@@ -17,6 +17,14 @@
     background-color: var(--background);
   }
 
+  :root:has(#app.dark) {
+    color-scheme: dark;
+  }
+
+  :root:has(#app.light) {
+    color-scheme: light;
+  }
+
   body {
     font-family: "Noto Sans", sans-serif;
     font-optical-sizing: auto;
