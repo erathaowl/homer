@@ -48,6 +48,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec eslint .
+      - run: node --test server/*.test.mjs
       - name: Build versioned static ZIP
         env:
           VERSION: ${{ steps.version.outputs.version }}

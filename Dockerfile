@@ -41,15 +41,16 @@ ENV GID=1000 \
     IPV6_DISABLE=0
 
 RUN addgroup -S lighttpd -g ${GID} && adduser -D -S -u ${UID} lighttpd lighttpd && \
-    apk add -U --no-cache tzdata lighttpd
+    apk add -U --no-cache tzdata nodejs
 
 WORKDIR /www
 
-COPY lighttpd.conf /lighttpd.conf
-COPY lighttpd-ipv6.sh /etc/lighttpd/ipv6.sh
+COPY server /opt/homer/server
+COPY --from=build-stage /app/node_modules/yaml/ /opt/homer/node_modules/yaml/
+ENV WEB_ROOT=/www
 COPY entrypoint.sh /entrypoint.sh
 COPY --from=build-stage --chown=${UID}:${GID} /app/dist /www/
-COPY --from=build-stage --chown=${UID}:${GID} /app/dist/assets /www/default-assets
+COPY --from=build-stage --chown=${UID}:${GID} /app/dist/assets /opt/default-assets
 
 USER ${UID}:${GID}
 

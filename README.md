@@ -8,7 +8,7 @@
 </h1>
 
 <h4 align="center">
- A dead simple static <strong>HOM</strong>epage for your serv<strong>ER</strong> to keep your services on hand, from a simple <code>yaml</code> configuration file.
+ A dead simple <strong>HOM</strong>epage for your serv<strong>ER</strong> to keep your services on hand, from a simple <code>yaml</code> configuration file.
 </h4>
 <p align="center">
   <a href="https://www.buymeacoffee.com/bastien" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174"></a>
@@ -145,7 +145,7 @@ Then your dashboard is ready to use in the `/dist` directory.
 
 ## Fork development and releases
 
-The [administrative editor implementation plan](docs/admin-implementation-plan.md) describes the planned authenticated YAML editor. The current dashboard remains static.
+The [administrative editor implementation plan](docs/admin-implementation-plan.md) describes the target architecture. The initial authenticated editor is available in the Docker deployment. See [Administration](docs/administration.md).
 
 Integration checks run on main and pull requests. Push a release tag to build and publish the Docker image to GHCR and create a GitHub release containing the static `homer.zip`:
 

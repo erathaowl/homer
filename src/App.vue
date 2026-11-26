@@ -32,6 +32,7 @@
         :links="config.links"
         @navbar-toggle="showMenu = !showMenu"
       >
+        <a v-if="adminEnabled" class="navbar-item" href="admin/" title="Administration"><i class="fas fa-gear"></i><span class="is-sr-only">Administration</span></a>
         <DarkMode
           :default-value="config.defaults.colorTheme"
           @updated="isDark = $event"
@@ -139,6 +140,7 @@ export default {
   data: function () {
     return {
       loaded: false,
+      adminEnabled: false,
       currentPage: null,
       configNotFound: false,
       config: null,
@@ -157,6 +159,7 @@ export default {
   },
   created: async function () {
     this.buildDashboard();
+    fetch("admin/api/status", { cache: "no-store" }).then(response => response.ok ? response.json() : null).then(status => { this.adminEnabled = status?.enabled === true; }).catch(() => {});
     window.onhashchange = this.buildDashboard;
     this.loaded = true;
     console.info(`Homer v${__APP_VERSION__}`);

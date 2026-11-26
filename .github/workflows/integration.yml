@@ -22,6 +22,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec eslint .
+      - run: node --test server/*.test.mjs
       - run: pnpm build
       - name: Test release tag normalization
         run: |
