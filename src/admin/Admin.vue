@@ -3,6 +3,8 @@ import { computed, onMounted, onUnmounted, provide, ref, shallowRef } from "vue"
 import { isMap, parseDocument } from "yaml";
 import ConfigField from "./ConfigField.vue";
 import { rootFields, sections } from "./schema.js";
+import iconMetadata from "@fortawesome/fontawesome-free/metadata/icons.json";
+const iconOptions = Object.entries(iconMetadata).flatMap(([name, data]) => (data.free || []).map(style => ({ solid: "fas", regular: "far", brands: "fab" })[style]).filter(Boolean).map(prefix => prefix + " fa-" + name));
 
 const enabled = ref(null);
 const authenticated = ref(false);
@@ -268,6 +270,7 @@ const previewColors = computed(() => {
         <ConfigField v-for="key in fields" :key="page + ':' + key" :path="[key]" :spec="rootFields[key] || {}" />
       </section>
       <section v-else class="alert">No local configuration exists. Create a page named config to get started.</section>
+      <datalist id="homer-icons"><option v-for="icon in iconOptions" :key="icon" :value="icon"></option></datalist>
       <footer class="save-bar">
         <span :class="dirty ? 'warning' : 'muted'">{{ dirty ? "Unsaved changes" : "All changes saved" }}</span>
         <div class="toolbar"><button class="small-button" :disabled="busy || !dirty" @click="discard">Discard</button><button class="primary" :disabled="busy || !dirty || !valid" @click="save">Save changes</button></div>

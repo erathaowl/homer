@@ -67,6 +67,7 @@ for (const name of ["Item", "Link", "QuickLink"]) {
 schema.definitions.Item.properties.type = choice(...types);
 schema.definitions.Item.properties.tagstyle = { type: "string", tokens: ["is-primary", "is-link", "is-info", "is-success", "is-warning", "is-danger", "is-light", "is-dark", "is-rounded", "is-medium", "is-large"] };
 schema.definitions.Item.properties.successCodes = list(number);
+schema.definitions.Item.properties.background.color = true;
 schema.definitions.QuickLink.properties.color.color = true;
 for (const [key, spec] of Object.entries(schema.definitions.ColorSet.properties)) {
   if (!["card-shadow", "background-image"].includes(key)) spec.color = true;
@@ -90,7 +91,7 @@ export function resolveSchema(spec = {}, value, key) {
     result = { ...result, properties: { ...result.properties, ...(extra[type] || {}), hide: list(choice(...new Set([...(hide || "").split(" ").filter(Boolean), "serverError", ...(value?.hide || [])]))) } };
     if (!type || type === "Generic") result = { ...result, properties: Object.fromEntries(Object.entries(result.properties).filter(([name]) => !["endpoint", "headers", "useCredentials", "successCodes", "updateIntervalMs", "hide"].includes(name) || Object.hasOwn(value || {}, name))) };
   }
-  if (key === "background" && typeof value === "string" && value.startsWith("#")) result = { ...result, color: true };
+  if (key === "background" && !result.enum) result = { ...result, color: true };
   if (!result.type && !result.enum) {
     const inferred = Array.isArray(value) ? "array" : value !== null && typeof value === "object" ? "object" : typeof value === "boolean" ? "boolean" : typeof value === "number" ? "integer" : "string";
     result = { ...result, type: inferred };

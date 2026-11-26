@@ -15,7 +15,7 @@ COPY . .
 ARG VERSION_TAG=latest
 RUN if [ "$VERSION_TAG" != "latest" ]; then \
       VERSION_TAG="$VERSION_TAG" node -e 'const fs = require("node:fs"); const p = JSON.parse(fs.readFileSync("package.json")); p.version = process.env.VERSION_TAG.replace(/^v/, ""); fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n")'; \
-    fi && pnpm build
+    fi && pnpm build && cp -LR node_modules/yaml /app/runtime-yaml
 
 # production stage
 FROM alpine:3.23
@@ -46,7 +46,7 @@ RUN addgroup -S lighttpd -g ${GID} && adduser -D -S -u ${UID} lighttpd lighttpd 
 WORKDIR /www
 
 COPY server /opt/homer/server
-COPY --from=build-stage /app/node_modules/yaml/ /opt/homer/node_modules/yaml/
+COPY --from=build-stage /app/runtime-yaml/ /opt/homer/node_modules/yaml/
 ENV WEB_ROOT=/www
 COPY entrypoint.sh /entrypoint.sh
 COPY --from=build-stage --chown=${UID}:${GID} /app/dist /www/

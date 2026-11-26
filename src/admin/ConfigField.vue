@@ -29,14 +29,31 @@ const isProtected = computed(() => {
 });
 const children = computed(() => { editor.change.value; return isSeq(node.value) ? node.value.items : []; });
 const newKey = ref("");
-const show = ref(true);
+const show = ref(props.spec.$ref !== "#/definitions/Item");
 const revealed = ref(false);
 const enumValues = computed(() => config.value.enum || []);
 const currentText = computed(() => value.value == null ? "" : String(value.value));
 const isHex = computed(() => /^#[0-9a-f]{6}$/i.test(currentText.value));
 const arrayChoices = computed(() => resolveSchema(config.value.items || {}).enum);
 const isCollection = computed(() => isMap(node.value) || isSeq(node.value));
-const iconOptions = ["fas fa-server", "fas fa-globe", "fas fa-home", "fas fa-network-wired", "fas fa-database", "fas fa-shield-halved", "fas fa-cloud", "fas fa-code", "fas fa-book", "fas fa-heartbeat", "fab fa-github", "fab fa-gitlab", "fab fa-docker", "fab fa-linux"];
+const destinations = computed(() => {
+  editor.change.value;
+  if (config.value.items?.$ref !== "#/definitions/Item" || props.path.length !== 3 || props.path[0] !== "services") return [];
+  const groups = editor.document.value?.getIn(["services"], true);
+  if (!isSeq(groups)) return [];
+  return groups.items.flatMap((group, index) => {
+    if (index === props.path[1] || !isMap(group) || group.items.some(pair => String(pair.key?.value) === "<<") || !isSeq(group.get("items", true))) return [];
+    return [{ index, name: String(group.get("name") || "Group " + (index + 1)) }];
+  });
+});
+function moveToGroup(index, destination) {
+  if (destination === "") return;
+  editor.edit(doc => {
+    const source = doc.getIn(props.path, true);
+    const target = doc.getIn(["services", Number(destination), "items"], true);
+    if (isSeq(source) && isSeq(target)) target.items.push(source.items.splice(index, 1)[0]);
+  });
+}
 
 function set(next) {
   editor.edit(doc => doc.setIn(props.path, next));
@@ -85,8 +102,11 @@ function selectEnum(event) {
   set(selected ?? event.target.value);
 }
 function toggleChoice(option, checked) {
-  const current = Array.isArray(value.value) ? [...value.value] : [];
-  set(checked ? [...current, option] : current.filter(v => v !== option));
+  editor.edit(doc => {
+    const sequence = doc.getIn(props.path, true);
+    if (checked) sequence.add(option);
+    else sequence.items = sequence.items.filter(item => item?.value !== option);
+  });
 }
 function toggleToken(option, checked) {
   const current = currentText.value.split(/\s+/).filter(Boolean);
@@ -136,6 +156,7 @@ function childLabel(child, index) {
             <div class="sequence-controls">
               <span class="drag-handle" draggable="true" @dragstart="drag($event, index)" @dragend="editor.drag.value = null" title="Drag to reorder"><i class="fas fa-grip-vertical"></i></span>
               <span class="spacer"></span>
+              <select v-if="destinations.length" class="move-select" aria-label="Move card to another group" value="" @change="moveToGroup(index, $event.target.value)"><option value="">Move to group…</option><option v-for="group in destinations" :key="group.index" :value="group.index">{{ group.name }}</option></select>
               <button type="button" class="small-button" :disabled="index === 0" @click="move(index, index - 1)" aria-label="Move up">↑</button>
               <button type="button" class="small-button" :disabled="index === children.length - 1" @click="move(index, index + 1)" aria-label="Move down">↓</button>
             </div>
@@ -182,6 +203,5 @@ function childLabel(child, index) {
       </div>
       <input v-else :value="currentText" :aria-label="title" @change="set($event.target.value)">
     </template>
-    <datalist v-if="path.at(-1) === 'icon'" id="homer-icons"><option v-for="icon in iconOptions" :key="icon" :value="icon"></option></datalist>
   </section>
 </template>

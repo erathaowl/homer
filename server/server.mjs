@@ -44,6 +44,8 @@ export function createServer({ root, username, password, subfolder = "", secure 
     throw new Error("Set both ADMIN_USERNAME and ADMIN_PASSWORD to non-empty values.");
   }
   const enabled = Boolean(username && password);
+  if (origin && new URL(origin).origin !== origin) throw new Error("ADMIN_ORIGIN must be an origin without a path.");
+  secure = secure || origin.startsWith("https://");
   const prefix = subfolder.replace(/\/+$/, "");
   if (prefix && !/^\/[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/.test(prefix)) throw new Error("Invalid SUBFOLDER.");
   const sessions = new Map();

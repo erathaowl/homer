@@ -50,10 +50,10 @@ export function validate(source) {
     throw new HttpError(422, "Links must be a list of mappings with URLs.");
   }
   if (config.services != null && (!Array.isArray(config.services) || config.services.some(group =>
-    !mapping(group) || !Array.isArray(group.items) || group.items.some(item =>
+    !mapping(group) || (group.items !== null && (!Array.isArray(group.items) || group.items.some(item =>
       !mapping(item) || typeof item.name !== "string" || !item.name.trim() ||
       (item.quick != null && (!Array.isArray(item.quick) || item.quick.some(link => !mapping(link) || typeof link.url !== "string")))
-    )))) {
+    )))))) {
     throw new HttpError(422, "Services must contain groups with item lists; every card needs a name and every quick link needs a URL.");
   }
   return config;
@@ -66,8 +66,10 @@ export function pageStore(directory) {
       throw new HttpError(400, "Invalid page name.");
     }
     const file = path.join(root, slug + ".yml");
-    if (fs.existsSync(file) || (() => { try { return fs.lstatSync(file).isSymbolicLink(); } catch { return false; } })()) {
+    try {
       if (!fs.lstatSync(file).isFile()) throw new HttpError(403, "Invalid configuration file.");
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
     }
     return file;
   }
