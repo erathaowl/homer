@@ -212,7 +212,7 @@ const previewColors = computed(() => {
       <h1>Administration</h1>
       <p class="muted">Manage your dashboard configuration.</p>
       <p v-if="error" class="alert error" role="alert">{{ error }}</p>
-      <p v-if="enabled === false" class="alert">Administration is disabled. Configure ADMIN_USERNAME and ADMIN_PASSWORD on the server.</p>
+      <p v-if="enabled === false" class="alert">Administration is disabled. Set ADMIN_ENABLED=1 and configure ADMIN_USERNAME and ADMIN_PASSWORD on the server.</p>
       <form v-else-if="enabled === true" class="login-form" @submit.prevent="login">
         <label>Username<input v-model="username" autocomplete="username" required></label>
         <label>Password<input v-model="password" type="password" autocomplete="current-password" required></label>

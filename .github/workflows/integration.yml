@@ -24,6 +24,13 @@ jobs:
       - run: pnpm exec eslint .
       - run: node --test server/*.test.mjs
       - run: pnpm build
+      - name: Verify isolated administrative build
+        run: |
+          test -f dist/index.html
+          test -f dist-admin/index.html
+          test ! -e dist/admin
+          test -d dist-admin/resources
+          if grep -F 'admin/resources/' dist/sw.js; then exit 1; fi
       - name: Test release tag normalization
         run: |
           test "$(bash scripts/release-version.sh v1.2)" = v1.2.0
@@ -35,10 +42,21 @@ jobs:
         run: docker build -t homer:ci .
       - name: Smoke test Docker image
         run: |
-          docker run -d --name homer-ci -p 127.0.0.1:8080:8080 -e ADMIN_USERNAME=test -e ADMIN_PASSWORD=ci-only homer:ci
+          docker run -d --name homer-ci -p 127.0.0.1:8080:8080 -e ADMIN_ENABLED=1 -e ADMIN_USERNAME=test -e ADMIN_PASSWORD=ci-only homer:ci
           trap 'docker logs homer-ci; docker rm -f homer-ci' EXIT
           curl --retry 15 --retry-all-errors --retry-delay 2 --fail --silent http://127.0.0.1:8080/ -o /dev/null
           curl --fail --silent http://127.0.0.1:8080/assets/config.yml -o /dev/null
           curl --fail --silent http://127.0.0.1:8080/admin/ -o /dev/null
           curl --fail --silent http://127.0.0.1:8080/admin/api/status | grep '"enabled":true'
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8080/admin/api/pages)" = 401
+
+      - name: Smoke test disabled administration
+        run: |
+          docker run -d --name homer-disabled -p 127.0.0.1:8080:8080 -e ADMIN_ENABLED=0 -e ADMIN_USERNAME=test -e ADMIN_PASSWORD=ci-only homer:ci
+          trap 'docker logs homer-disabled; docker rm -f homer-disabled' EXIT
+          curl --retry 15 --retry-all-errors --retry-delay 2 --fail --silent http://127.0.0.1:8080/ -o /dev/null
+          curl --fail --silent http://127.0.0.1:8080/assets/config.yml -o /dev/null
+          for route in /admin /admin/ /admin/index.html /admin/api/status /admin/api/pages /admin/resources/editor.js; do
+            test "$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:8080$route")" = 404
+          done
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST http://127.0.0.1:8080/admin/api/login)" = 404

@@ -38,7 +38,8 @@ ENV GID=1000 \
     PORT=8080 \
     SUBFOLDER="/_" \
     INIT_ASSETS=1 \
-    IPV6_DISABLE=0
+    IPV6_DISABLE=0 \
+    ADMIN_ENABLED=0
 
 RUN addgroup -S lighttpd -g ${GID} && adduser -D -S -u ${UID} lighttpd lighttpd && \
     apk add -U --no-cache tzdata nodejs
@@ -47,9 +48,11 @@ WORKDIR /www
 
 COPY server /opt/homer/server
 COPY --from=build-stage /app/runtime-yaml/ /opt/homer/node_modules/yaml/
-ENV WEB_ROOT=/www
+ENV WEB_ROOT=/www \
+    ADMIN_WEB_ROOT=/opt/homer/admin
 COPY entrypoint.sh /entrypoint.sh
 COPY --from=build-stage --chown=${UID}:${GID} /app/dist /www/
+COPY --from=build-stage /app/dist-admin /opt/homer/admin
 COPY --from=build-stage --chown=${UID}:${GID} /app/dist/assets /opt/default-assets
 
 USER ${UID}:${GID}

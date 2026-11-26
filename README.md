@@ -59,6 +59,7 @@
 - [Getting started](#get-started)
 - [Kubernetes Installation](docs/kubernetes.md)
 - [Configuration](docs/configuration.md)
+- [Administration](docs/administration.md)
 - [Theming](docs/theming.md)
 - [Smart cards](docs/customservices.md)
 - [Tips & tricks](docs/tips-and-tricks.md)
@@ -120,6 +121,12 @@ If you would like to change internal port of Homer from default `8080` to your p
 
 - **`IPV6_DISABLE`** (default: 0)
 Set to `1` to disable listening on IPv6.
+
+- **`ADMIN_ENABLED`** (default: `0`)
+Set to `1` or `true` to enable administration. When disabled, the admin frontend and all admin API routes return HTTP 404, even with credentials configured.
+
+- **`ADMIN_USERNAME`**, **`ADMIN_PASSWORD`**
+Required only when `ADMIN_ENABLED` is enabled. See [Administration](docs/administration.md) for security and HTTPS settings.
 
 ### Using the release tarball (prebuilt, ready to use)
 

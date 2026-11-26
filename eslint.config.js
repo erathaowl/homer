@@ -10,7 +10,7 @@ export default defineConfig([
     name: 'app/files-to-lint',
     files: ['**/*.{vue,js,mjs,jsx}'],
   },
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/dist-admin/**', '**/dist-ssr/**', '**/coverage/**']),
   {
     languageOptions: {
       globals: {

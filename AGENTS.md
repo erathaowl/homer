@@ -101,4 +101,4 @@ When creating mock data for service components testing:
 - Configuration changes require restart in development mode
 - New service components should follow the Generic component slot pattern
 - Themes use CSS custom properties for dynamic color switching
-- The dashboard still builds to static files. The managed Docker deployment uses the native Node HTTP server in server/ and the separate Vue administration app in src/admin/. Run node --test server/*.test.mjs for YAML persistence and authentication tests. Keep admin credentials server-side and preserve the original YAML document when editing.
+- The dashboard still builds to static files. The managed Docker deployment uses the native Node HTTP server in server/ and the separate Vue administration app in src/admin/. Run node --test server/*.test.mjs for YAML persistence and authentication tests. The admin build is separate (dist-admin), served only when ADMIN_ENABLED=1. Keep admin credentials server-side and preserve the original YAML document when editing.

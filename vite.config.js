@@ -23,9 +23,6 @@ export default defineConfig({
   base: "",
   build: {
     assetsDir: "resources",
-    rollupOptions: {
-      input: { dashboard: fileURLToPath(new URL("./index.html", import.meta.url)), admin: fileURLToPath(new URL("./admin/index.html", import.meta.url)) },
-    },
   },
   define: {
     __APP_VERSION__: JSON.stringify(version),
@@ -79,6 +76,7 @@ export default defineConfig({
       workbox: {
         navigateFallback: null,
         globIgnores: ["**/admin/**"],
+        cleanupOutdatedCaches: true,
       },
     }),
   ],

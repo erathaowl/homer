@@ -38,13 +38,22 @@ async function body(req) {
   }
 }
 
-export function createServer({ root, username, password, subfolder = "", secure = false, origin = "" }) {
+export function parseAdminEnabled(value = "0") {
+  switch (value.toLowerCase()) {
+    case "1": case "true": return true;
+    case "0": case "false": return false;
+    default: throw new Error("ADMIN_ENABLED must be 0, 1, false or true.");
+  }
+}
+
+export function createServer({ root, adminRoot = path.resolve("dist-admin"), adminEnabled = false, username, password, subfolder = "", secure = false, origin = "" }) {
   root = fs.realpathSync(root);
-  if ((username !== undefined || password !== undefined) && (!username || !password)) {
+  adminRoot = path.resolve(adminRoot);
+  const enabled = adminEnabled === true;
+  if (enabled && (!username || !password)) {
     throw new Error("Set both ADMIN_USERNAME and ADMIN_PASSWORD to non-empty values.");
   }
-  const enabled = Boolean(username && password);
-  if (origin && new URL(origin).origin !== origin) throw new Error("ADMIN_ORIGIN must be an origin without a path.");
+  if (enabled && origin && new URL(origin).origin !== origin) throw new Error("ADMIN_ORIGIN must be an origin without a path.");
   secure = secure || origin.startsWith("https://");
   const prefix = subfolder.replace(/\/+$/, "");
   if (prefix && !/^\/[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/.test(prefix)) throw new Error("Invalid SUBFOLDER.");
@@ -76,6 +85,7 @@ export function createServer({ root, username, password, subfolder = "", secure 
       }
       url = url.slice(base.length);
       const admin = url === "/admin" || url.startsWith("/admin/");
+      if (admin && !enabled) throw new HttpError(404, "Not found.");
       const api = url.startsWith("/admin/api/");
       if (admin) {
         res.setHeader("Cache-Control", "no-store");
@@ -95,7 +105,6 @@ export function createServer({ root, username, password, subfolder = "", secure 
         if (method === "GET" && route === "status") {
           return json(200, { enabled, authenticated: Boolean(session), csrf: session?.csrf });
         }
-        if (!enabled) throw new HttpError(404, "Administration is disabled.");
         if (!["GET", "HEAD"].includes(method)) {
           const expected = origin || (secure ? "https://" : "http://") + req.headers.host;
           if (req.headers.origin !== expected || req.headers["sec-fetch-site"] === "cross-site") {
@@ -163,12 +172,15 @@ export function createServer({ root, username, password, subfolder = "", secure 
       }
       if (url.split("/").some(part => part.startsWith(".")) || url.includes("\\") || url.includes("\0")) throw new HttpError(404, "Not found.");
       // Runtime internals and backup/temp files never live in the public directory.
-      let file = path.resolve(root, "." + url);
-      if (!file.startsWith(root + path.sep) && file !== root) throw new HttpError(404, "Not found.");
+      const staticRoot = admin ? fs.realpathSync(adminRoot) : root;
+      const relativeUrl = admin ? url.slice("/admin".length) : url;
+      let file = path.resolve(staticRoot, "." + relativeUrl);
+      if (!file.startsWith(staticRoot + path.sep) && file !== staticRoot) throw new HttpError(404, "Not found.");
       if (!fs.existsSync(file)) throw new HttpError(404, "Not found.");
       if (fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
       file = fs.realpathSync(file);
-      if (!file.startsWith(root + path.sep) || !fs.statSync(file).isFile() || path.relative(root, file).split(path.sep).some(part => part.startsWith("."))) throw new HttpError(404, "Not found.");
+      if (!file.startsWith(staticRoot + path.sep) || !fs.statSync(file).isFile() || path.relative(staticRoot, file).split(path.sep).some(part => part.startsWith("."))) throw new HttpError(404, "Not found.");
+      if (!admin && (path.relative(root, file).split(path.sep)[0] === "admin" || file === adminRoot || file.startsWith(adminRoot + path.sep))) throw new HttpError(404, "Not found.");
       const extension = path.extname(file).toLowerCase();
       const stat = fs.statSync(file);
       if (!admin) {
@@ -191,6 +203,8 @@ export function createServer({ root, username, password, subfolder = "", secure 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const server = createServer({
     root: process.env.WEB_ROOT || "dist",
+    adminRoot: process.env.ADMIN_WEB_ROOT || "dist-admin",
+    adminEnabled: parseAdminEnabled(process.env.ADMIN_ENABLED),
     username: process.env.ADMIN_USERNAME,
     password: process.env.ADMIN_PASSWORD,
     subfolder: process.env.SUBFOLDER || "",
