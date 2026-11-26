@@ -169,7 +169,7 @@ git tag v1.2.3
 git push origin v1.2.3
 ```
 
-Alternatively, run [Release](https://github.com/erathaowl/homer/actions/workflows/release.yml) on `main`, specifying a version or leaving it blank to read `package.json`. A commit to `main` that changes `package.json` and explicitly includes `[release]` in its commit message also starts the same release pipeline using the package version. Ordinary version edits without that marker do not publish.
+Alternatively, run [Release](https://github.com/erathaowl/homer/actions/workflows/release.yml) on `main`, specifying a version or leaving it blank to read `package.json`. A commit to `main` that explicitly includes `[release]` in its commit message also starts the same release pipeline using the package version, including retries after failed checks. Ordinary version edits without that marker do not publish.
 
 A short tag such as `v1.2` is normalized to `v1.2.0`. The workflow creates the canonical Git tag if needed, rejects conflicting canonical tags, publishes the canonical version with and without the `v` prefix (plus the original short tag if applicable), and updates `latest` on a successful image publication. The release is created only after the image is published. Do not push both spellings of the same version; a short tag is sufficient.
 

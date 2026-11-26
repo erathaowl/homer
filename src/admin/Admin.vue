@@ -3,8 +3,7 @@ import { computed, onMounted, onUnmounted, provide, ref, shallowRef } from "vue"
 import { isMap, parseDocument } from "yaml";
 import ConfigField from "./ConfigField.vue";
 import { rootFields, sections } from "./schema.js";
-import iconMetadata from "@fortawesome/fontawesome-free/metadata/icons.json";
-const iconOptions = Object.entries(iconMetadata).flatMap(([name, data]) => (data.free || data.styles || []).map(style => ({ solid: "fas", regular: "far", brands: "fab" })[style]).filter(Boolean).map(prefix => prefix + " fa-" + name));
+import iconOptions from "virtual:admin-icons";
 
 const enabled = ref(null);
 const authenticated = ref(false);

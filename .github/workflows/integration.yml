@@ -33,7 +33,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec eslint .
-      - run: node --test server/*.test.mjs
+      - run: node --test server/*.test.mjs scripts/*.test.mjs
       - run: bash scripts/test-tags.sh
       - name: Set build version
         env:
