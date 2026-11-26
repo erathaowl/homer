@@ -4,7 +4,7 @@ FROM --platform=$BUILDPLATFORM node:24-alpine3.23 AS build-stage
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
-RUN corepack enable && corepack use pnpm@10
+RUN corepack enable
 
 WORKDIR /app
 
@@ -12,7 +12,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm build
+ARG VERSION_TAG=latest
+RUN if [ "$VERSION_TAG" != "latest" ]; then \
+      VERSION_TAG="$VERSION_TAG" node -e 'const fs = require("node:fs"); const p = JSON.parse(fs.readFileSync("package.json")); p.version = process.env.VERSION_TAG.replace(/^v/, ""); fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n")'; \
+    fi && pnpm build
 
 # production stage
 FROM alpine:3.23
@@ -24,11 +27,11 @@ LABEL \
     org.label-schema.version="$VERSION_TAG" \
     org.opencontainers.image.title="Homer Image" \
     org.opencontainers.image.description="A dead simple static Home-Page for your server to keep your services on hand, from a simple yaml configuration file." \
-    org.opencontainers.image.ref.name="b4bz/homer:${VERSION_TAG}" \
+    org.opencontainers.image.ref.name="ghcr.io/erathaowl/homer:${VERSION_TAG}" \
     org.opencontainers.image.version="$VERSION_TAG" \
     org.opencontainers.image.licenses="Apache-2.0 license" \
-    org.opencontainers.image.source="https://github.com/homer-dashboard/homer" \
-    org.opencontainers.image.url="https://hub.docker.com/r/b4bz/homer"
+    org.opencontainers.image.source="https://github.com/erathaowl/homer" \
+    org.opencontainers.image.url="https://github.com/erathaowl/homer/pkgs/container/homer"
 
 ENV GID=1000 \
     UID=1000 \

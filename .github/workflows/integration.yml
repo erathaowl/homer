@@ -1,34 +1,40 @@
-# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
 name: Integration
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-    - 
-      name: Checkout
-      uses: actions/checkout@v7
-    - 
-      name: pnpm setup
-      uses: pnpm/action-setup@v6
-    - 
-      name: Node.js setup
-      uses: actions/setup-node@v6
-      with:
-        node-version: 24
-        cache: 'pnpm'
-    - 
-      name: install dependencies
-      run: pnpm install --frozen-lockfile
-    - 
-      name: Check code style & potentential issues
-      run: pnpm lint
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec eslint .
+      - run: pnpm build
+      - name: Test release tag normalization
+        run: |
+          test "$(bash scripts/release-version.sh v1.2)" = v1.2.0
+          test "$(bash scripts/release-version.sh v1.2.3)" = v1.2.3
+          for tag in v1 v1.2.3.4 v1.2-rc1 v01.2 1.2.3; do
+            if bash scripts/release-version.sh "$tag"; then exit 1; fi
+          done
+      - name: Build Docker image
+        run: docker build -t homer:ci .
+      - name: Smoke test Docker image
+        run: |
+          docker run -d --name homer-ci -p 127.0.0.1:8080:8080 homer:ci
+          trap 'docker logs homer-ci; docker rm -f homer-ci' EXIT
+          curl --retry 15 --retry-all-errors --retry-delay 2 --fail --silent http://127.0.0.1:8080/ -o /dev/null
+          curl --fail --silent http://127.0.0.1:8080/assets/config.yml -o /dev/null

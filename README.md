@@ -17,7 +17,7 @@
  <a href="https://opensource.org/licenses/Apache-2.0"><img
   alt="License: Apache 2"
   src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>
-  <a href="https://github.com/homer-dashboard/homer/releases/latest/download/homer.zip"><img
+  <a href="https://github.com/erathaowl/homer/releases/latest/download/homer.zip"><img
   alt="Download homer static build"
   src="https://img.shields.io/badge/Download-homer.zip-orange"></a>
  <a href="https://twitter.com/acdlite/status/974390255393505280"><img
@@ -32,7 +32,7 @@
  <strong>
   <a href="https://homer-demo.netlify.app">Demo</a>
   •
-  <a href="https://hub.docker.com/r/b4bz/homer">Docker Hub</a>
+  <a href="https://github.com/erathaowl/homer/pkgs/container/homer">GHCR</a>
   •
   <a href="#get-started">Get started</a>
  </strong>
@@ -84,7 +84,7 @@ docker run -d \
   -p 8080:8080 \
   --mount type=bind,source="/path/to/config/dir",target=/www/assets \
   --restart=unless-stopped \
-  b4bz/homer:latest
+  ghcr.io/erathaowl/homer:latest
 ```
 
 > [!NOTE]  
@@ -95,7 +95,7 @@ docker run -d \
 ```yaml
 services:
   homer:
-    image: b4bz/homer
+    image: ghcr.io/erathaowl/homer:latest
     container_name: homer
     volumes:
       - /path/to/config/dir:/www/assets # Make sure your local config directory exists
@@ -123,10 +123,10 @@ Set to `1` to disable listening on IPv6.
 
 ### Using the release tarball (prebuilt, ready to use)
 
-Download and extract the latest release (`homer.zip`) from the [release page](https://github.com/homer-dashboard/homer/releases), rename the `assets/config.yml.dist` file to `assets/config.yml`, and put it behind a web server.
+Download and extract the latest release (`homer.zip`) from the [release page](https://github.com/erathaowl/homer/releases), rename the `assets/config.yml.dist` file to `assets/config.yml`, and put it behind a web server.
 
 ```sh
-wget https://github.com/homer-dashboard/homer/releases/latest/download/homer.zip
+wget https://github.com/erathaowl/homer/releases/latest/download/homer.zip
 unzip homer.zip -d homer
 cd homer
 cp assets/config.yml.dist assets/config.yml
@@ -141,3 +141,19 @@ pnpm build
 ```
 
 Then your dashboard is ready to use in the `/dist` directory.
+
+
+## Fork development and releases
+
+The [administrative editor implementation plan](docs/admin-implementation-plan.md) describes the planned authenticated YAML editor. The current dashboard remains static.
+
+Integration checks run on main and pull requests. Push a release tag to build and publish the Docker image to GHCR and create a GitHub release containing the static `homer.zip`:
+
+```sh
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+A short tag such as `v1.2` is normalized to `v1.2.0`. The workflow creates the canonical Git tag if needed, rejects conflicting canonical tags, publishes the canonical version with and without the `v` prefix (plus the original short tag if applicable), and updates `latest` on a successful image publication. The release is created only after the image is published. Do not push both spellings of the same version; a short tag is sufficient.
+
+The image targets linux/amd64, linux/arm64, linux/arm/v7 and linux/arm/v6. Make the GHCR package public in package settings if anonymous pulls are desired.
