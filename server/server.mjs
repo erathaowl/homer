@@ -168,7 +168,7 @@ export function createServer({ root, username, password, subfolder = "", secure 
       if (!fs.existsSync(file)) throw new HttpError(404, "Not found.");
       if (fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
       file = fs.realpathSync(file);
-      if (!file.startsWith(root + path.sep) || !fs.statSync(file).isFile()) throw new HttpError(404, "Not found.");
+      if (!file.startsWith(root + path.sep) || !fs.statSync(file).isFile() || path.relative(root, file).split(path.sep).some(part => part.startsWith("."))) throw new HttpError(404, "Not found.");
       const extension = path.extname(file).toLowerCase();
       const stat = fs.statSync(file);
       if (!admin) {

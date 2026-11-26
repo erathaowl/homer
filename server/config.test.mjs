@@ -17,6 +17,8 @@ test("YAML storage preserves source, rejects stale writes and unsafe paths", () 
     assert.equal(validate(source).services[0].items[0].tag, "demo");
     store.write("config", source + "title: New\n", current.revision);
     assert.throws(() => store.write("config", source, current.revision), { status: 409 });
+    const backup = fs.readdirSync(path.join(dir, ".homer-backups"))[0];
+    assert.equal(fs.readFileSync(path.join(dir, ".homer-backups", backup), "utf8"), source);
     assert.throws(() => store.read("../outside"), { status: 400 });
     fs.symlinkSync(path.join(dir, "config.yml"), path.join(dir, "alias.yml"));
     assert.throws(() => store.read("alias"), { status: 403 });
@@ -54,6 +56,8 @@ test("authenticated API, origin, CSRF, revision and disabled mode", async () => 
     assert.equal((await fetch(api + "pages/config", { method: "PUT", headers, body: data })).status, 200);
     assert.equal((await fetch(api + "pages/config", { method: "PUT", headers, body: data })).status, 409);
     assert.equal(fs.readFileSync(path.join(dir, "assets/config.yml"), "utf8"), "title: Updated\n");
+    const backup = fs.readdirSync(path.join(dir, "assets/.homer-backups"))[0];
+    assert.equal((await fetch(origin + "/assets/.homer-backups/" + backup)).status, 404);
     assert.equal((await fetch(api + "logout", { method: "POST", headers, body: "{}" })).status, 200);
     assert.equal((await fetch(api + "pages", { headers: { Cookie: cookie } })).status, 401);
     assert.throws(() => createServer({ root: dir, username: "admin" }), /both ADMIN/);

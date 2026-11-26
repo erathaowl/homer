@@ -15,6 +15,7 @@
 </template>
 
 <script>
+import { sanitizeMessage } from "@/utils/sanitizeMessage.js";
 export default {
   name: "Message",
   props: {
@@ -74,7 +75,7 @@ export default {
       // keep the original config value if no value is provided by the endpoint
       for (const prop of ["title", "style", "content", "icon"]) {
         if (prop in fetchedMessage && fetchedMessage[prop] !== null) {
-          this.message[prop] = fetchedMessage[prop];
+          this.message[prop] = prop === "content" ? sanitizeMessage(fetchedMessage[prop]) : fetchedMessage[prop];
         }
       }
     },

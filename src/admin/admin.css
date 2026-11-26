@@ -71,3 +71,13 @@ p { margin: 6px 0 12px; }
 .preview-card { background: var(--preview-card); border-radius: 8px; padding: 13px; display: flex; gap: 9px; align-items: center; min-width: 0; overflow-wrap: anywhere; }
 .preview-card small { display: block; opacity: .7; }
 @media (max-width: 700px) { .admin-layout { display: block; } .sidebar { height: auto; position: static; padding: 14px; border-right: 0; border-bottom: 1px solid var(--line); } .sidebar nav { display: flex; overflow-x: auto; margin: 14px 0; } .sidebar nav button { white-space: nowrap; } .sidebar-bottom { display: flex; align-items: center; padding: 0; } .workspace { padding: 16px 12px 45px; } .editor-panel { padding: 10px; } .nested-fields { padding-left: 7px; } .preview-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important; } .save-bar { flex-wrap: wrap; } }
+
+.move-select { width: auto; max-width: 180px; padding: 5px 8px; font-size: .78rem; }
+.theme-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
+.theme-option { display: grid; gap: 8px; text-align: center; padding: 8px; }
+.theme-option.selected { outline: 2px solid var(--primary); outline-offset: -2px; }
+.theme-sample { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #e7edf5; border-radius: 5px; padding: 5px; min-height: 60px; }
+.theme-sample span { grid-column: 1 / -1; height: 15px; background: #3367d6; border-radius: 2px; }
+.theme-sample i { display: block; min-height: 24px; background: #fff; border-radius: 2px; }
+.theme-sample.neon { background: #191423; }.theme-sample.neon span { background: #a64cdb; }.theme-sample.neon i { background: #47345d; }
+.theme-sample.walkxcode { background: #354c5a; }.theme-sample.walkxcode span { background: #668699; }.theme-sample.walkxcode i { background: #8ca4b1; }

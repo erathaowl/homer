@@ -171,6 +171,9 @@ function childLabel(child, index) {
         <div class="choice-grid"><label v-for="option in config.tokens" :key="option"><input type="checkbox" :checked="currentText.split(/\s+/).includes(option)" @change="toggleToken(option, $event.target.checked)"> {{ option }}</label></div>
         <input :value="currentText" :aria-label="title" @change="set($event.target.value)">
       </template>
+      <template v-else-if="config.themePicker">
+        <div class="theme-options"><button v-for="option in enumValues" :key="option" type="button" class="theme-option" :class="{ selected: currentText === option }" :aria-pressed="currentText === option" @click="set(option)"><span class="theme-sample" :class="option"><span></span><i></i><i></i><i></i></span>{{ option }}</button></div>
+      </template>
       <template v-else-if="enumValues.length">
         <select :value="currentText" :aria-label="title" @change="selectEnum">
           <option v-if="!enumValues.some(v => String(v) === currentText)" :value="currentText">{{ currentText }} (custom)</option>

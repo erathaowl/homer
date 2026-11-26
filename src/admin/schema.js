@@ -55,7 +55,7 @@ const types = Object.keys(import.meta.glob("../components/services/*.vue"))
   .map(path => path.split("/").pop().replace(".vue", ""))
   .filter(name => !name.startsWith("_")).sort();
 
-schema.properties.theme = choice("default", "neon", "walkxcode");
+schema.properties.theme = { ...choice("default", "neon", "walkxcode"), themePicker: true };
 schema.properties.columns = choice("auto", "1", "2", "3", "4", "6", "12");
 schema.properties.footer = { type: ["boolean", "string"], multiline: true };
 schema.properties.stylesheet = list(text);
@@ -88,7 +88,8 @@ export function resolveSchema(spec = {}, value, key) {
   if (result === schema.definitions.Item) {
     const type = value?.type;
     const hide = badges[type];
-    result = { ...result, properties: { ...result.properties, ...(extra[type] || {}), hide: list(choice(...new Set([...(hide || "").split(" ").filter(Boolean), "serverError", ...(value?.hide || [])]))) } };
+    const selectedHide = Array.isArray(value?.hide) ? value.hide : [];
+    result = { ...result, properties: { ...result.properties, ...(extra[type] || {}), hide: list(choice(...new Set([...(hide || "").split(" ").filter(Boolean), "serverError", ...selectedHide]))) } };
     if (!type || type === "Generic") result = { ...result, properties: Object.fromEntries(Object.entries(result.properties).filter(([name]) => !["endpoint", "headers", "useCredentials", "successCodes", "updateIntervalMs", "hide"].includes(name) || Object.hasOwn(value || {}, name))) };
   }
   if (key === "background" && !result.enum) result = { ...result, color: true };
@@ -102,6 +103,7 @@ export function resolveSchema(spec = {}, value, key) {
 export function initialValue(spec = {}) {
   const resolved = resolveSchema(spec);
   if (resolved.enum) return resolved.enum[0] ?? "";
+  if (resolved.color) return "#3367d6";
   if (resolved.type === "object") {
     if (resolved.title === "Service") return { name: "New group", items: [] };
     if (resolved.title === "Item") return { name: "New card", url: "#" };

@@ -82,6 +82,19 @@ export function pageStore(directory) {
     return { source, revision: revision(source) };
   }
 
+  function backup(slug, source) {
+    const directory = path.join(root, ".homer-backups");
+    try { fs.mkdirSync(directory, { mode: 0o700 }); }
+    catch (error) { if (error.code !== "EEXIST") throw error; }
+    if (!fs.lstatSync(directory).isDirectory()) throw new HttpError(403, "Invalid backup directory.");
+    const name = slug + "-" + Date.now() + "-" + randomBytes(6).toString("hex") + ".yml";
+    fs.writeFileSync(path.join(directory, name), source, { flag: "wx", mode: 0o600 });
+    const files = fs.readdirSync(directory, { withFileTypes: true })
+      .filter(entry => entry.isFile() && entry.name.startsWith(slug + "-") && /^\d{13}-[0-9a-f]{12}\.yml$/.test(entry.name.slice(slug.length + 1)))
+      .map(entry => entry.name).sort().reverse();
+    for (const old of files.slice(5)) fs.unlinkSync(path.join(directory, old));
+  }
+
   function write(slug, source, expected, create = false) {
     const file = filename(slug);
     validate(source);
@@ -100,7 +113,9 @@ export function pageStore(directory) {
       fd = undefined;
       if (create) fs.linkSync(temporary, file);
       else {
-        if (read(slug).revision !== expected) throw new HttpError(409, "The file has changed.");
+        const current = read(slug);
+        if (current.revision !== expected) throw new HttpError(409, "The file has changed.");
+        backup(slug, current.source);
         fs.renameSync(temporary, file);
       }
     } finally {
@@ -120,7 +135,9 @@ export function pageStore(directory) {
     write,
     remove(slug, expected) {
       if (slug.toLowerCase() === "config") throw new HttpError(400, "The main configuration cannot be deleted.");
-      if (read(slug).revision !== expected) throw new HttpError(409, "The file has changed.");
+      const current = read(slug);
+      if (current.revision !== expected) throw new HttpError(409, "The file has changed.");
+      backup(slug, current.source);
       fs.unlinkSync(filename(slug));
     },
   };
