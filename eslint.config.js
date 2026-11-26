@@ -19,7 +19,7 @@ export default defineConfig([
       },
     },
   },
-  { files: ['server/**/*.mjs'], languageOptions: { globals: globals.node } },
+  { files: ['server/**/*.mjs', 'scripts/**/*.mjs'], languageOptions: { globals: globals.node } },
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
   skipFormatting,

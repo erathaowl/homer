@@ -154,12 +154,22 @@ Then your dashboard is ready to use in the `/dist` directory.
 
 The [administrative editor implementation plan](docs/admin-implementation-plan.md) describes the target architecture. The initial authenticated editor is available in the Docker deployment. See [Administration](docs/administration.md).
 
-Integration checks run on main and pull requests. Push a release tag to build and publish the Docker image to GHCR and create a GitHub release containing the static `homer.zip`:
+Integration checks run on all branch pushes, pull requests to main, and manual runs. Both publishing workflows run lint, server tests, tag tests, the production build and Docker smoke tests in both admin modes before publication.
+
+### Development images
+
+Open [Build and publish branch](https://github.com/erathaowl/homer/actions/workflows/build.yml), select **Run workflow**, choose the source branch and optionally specify an image tag. Leave the tag empty to use the branch name. For example, `develop` publishes `ghcr.io/erathaowl/homer:develop` and `feature/admin` publishes `ghcr.io/erathaowl/homer:feature-admin`. Invalid characters in default branch tags are replaced with hyphens; Docker tags are limited to 128 characters. Explicit custom tags must already be valid Docker tags. `latest` and numeric release tags are reserved for the release workflow. Development builds do not create Git tags or releases.
+
+### Stable releases
+
+Push a release tag to build and publish the Docker image to GHCR and create a GitHub release containing the static `homer.zip`:
 
 ```sh
 git tag v1.2.3
 git push origin v1.2.3
 ```
+
+Alternatively, run [Release](https://github.com/erathaowl/homer/actions/workflows/release.yml) on `main`, specifying a version or leaving it blank to read `package.json`. A commit to `main` that changes `package.json` and explicitly includes `[release]` in its commit message also starts the same release pipeline using the package version. Ordinary version edits without that marker do not publish.
 
 A short tag such as `v1.2` is normalized to `v1.2.0`. The workflow creates the canonical Git tag if needed, rejects conflicting canonical tags, publishes the canonical version with and without the `v` prefix (plus the original short tag if applicable), and updates `latest` on a successful image publication. The release is created only after the image is published. Do not push both spellings of the same version; a short tag is sufficient.
 

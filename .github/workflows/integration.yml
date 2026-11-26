@@ -2,9 +2,20 @@ name: Integration
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
     branches: [main]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version_tag:
+        description: Canonical release tag for versioned builds
+        type: string
+        default: latest
+      release_artifact:
+        description: Upload the static release ZIP
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -23,6 +34,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec eslint .
       - run: node --test server/*.test.mjs
+      - run: bash scripts/test-tags.sh
+      - name: Set build version
+        env:
+          VERSION: ${{ inputs.version_tag || 'latest' }}
+        run: |
+          if [ "$VERSION" != latest ]; then
+            node -e 'const fs = require("node:fs"); const p = JSON.parse(fs.readFileSync("package.json")); p.version = process.env.VERSION.slice(1); fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n")'
+          fi
       - run: pnpm build
       - name: Verify isolated administrative build
         run: |
@@ -30,33 +49,20 @@ jobs:
           test -f dist-admin/index.html
           test ! -e dist/admin
           test -d dist-admin/resources
+          test -f dist/sw.js
           if grep -F 'admin/resources/' dist/sw.js; then exit 1; fi
-      - name: Test release tag normalization
-        run: |
-          test "$(bash scripts/release-version.sh v1.2)" = v1.2.0
-          test "$(bash scripts/release-version.sh v1.2.3)" = v1.2.3
-          for tag in v1 v1.2.3.4 v1.2-rc1 v01.2 1.2.3; do
-            if bash scripts/release-version.sh "$tag"; then exit 1; fi
-          done
       - name: Build Docker image
-        run: docker build -t homer:ci .
-      - name: Smoke test Docker image
-        run: |
-          docker run -d --name homer-ci -p 127.0.0.1:8080:8080 -e ADMIN_ENABLED=1 -e ADMIN_USERNAME=test -e ADMIN_PASSWORD=ci-only homer:ci
-          trap 'docker logs homer-ci; docker rm -f homer-ci' EXIT
-          curl --retry 15 --retry-all-errors --retry-delay 2 --fail --silent http://127.0.0.1:8080/ -o /dev/null
-          curl --fail --silent http://127.0.0.1:8080/assets/config.yml -o /dev/null
-          curl --fail --silent http://127.0.0.1:8080/admin/ -o /dev/null
-          curl --fail --silent http://127.0.0.1:8080/admin/api/status | grep '"enabled":true'
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8080/admin/api/pages)" = 401
-
-      - name: Smoke test disabled administration
-        run: |
-          docker run -d --name homer-disabled -p 127.0.0.1:8080:8080 -e ADMIN_ENABLED=0 -e ADMIN_USERNAME=test -e ADMIN_PASSWORD=ci-only homer:ci
-          trap 'docker logs homer-disabled; docker rm -f homer-disabled' EXIT
-          curl --retry 15 --retry-all-errors --retry-delay 2 --fail --silent http://127.0.0.1:8080/ -o /dev/null
-          curl --fail --silent http://127.0.0.1:8080/assets/config.yml -o /dev/null
-          for route in /admin /admin/ /admin/index.html /admin/api/status /admin/api/pages /admin/resources/editor.js; do
-            test "$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:8080$route")" = 404
-          done
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST http://127.0.0.1:8080/admin/api/login)" = 404
+        env:
+          VERSION: ${{ inputs.version_tag || 'latest' }}
+        run: docker build --build-arg "VERSION_TAG=$VERSION" -t homer:ci .
+      - name: Smoke test both administration modes
+        run: bash scripts/smoke-image.sh homer:ci
+      - name: Create static release ZIP
+        if: inputs.release_artifact
+        run: (cd dist && zip -r ../homer.zip .)
+      - uses: actions/upload-artifact@v4
+        if: inputs.release_artifact
+        with:
+          name: homer-static
+          path: homer.zip
+          if-no-files-found: error
